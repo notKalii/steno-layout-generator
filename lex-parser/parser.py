@@ -1,4 +1,5 @@
 import argparse
+import json
 
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 trans_table = {}
@@ -113,9 +114,8 @@ def save_file(lexicon, folder='lex-parser/', lexFile='parsed', transFile='trans_
     with open(folder+lexFile+'.txt', 'w') as f:
         for line in lexicon:
             f.write(':'.join(line)+'\n')
-    with open(folder+transFile+'.txt', 'w') as f:
-        for token in trans_table.keys():
-            f.write(token+' - '+trans_table[token]+'\n')
+    with open(folder+transFile+'.json', 'w') as f:
+        json.dump(trans_table, f, indent=2)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
