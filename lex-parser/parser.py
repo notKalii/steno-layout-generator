@@ -1,7 +1,53 @@
 import argparse
 
 def parse_pron(pron):
-    pass
+    trans_table = {}
+    trans_id = 0
+    token = ''
+    vowel_ = False
+    section = ''
+    syllable = []
+    word = []
+    for char in pron+'.':
+        if char in ['{', '}', '<', '>', '*', '$', '=', '-', '~']:
+            continue
+
+        if char == ' ':
+            if token != '':
+                if token[-1] == '!':
+                    token = token[:-1]
+                    syllable.append(section)
+                    syllable.append('')
+                    section = ''
+                if (token[0] in 'aeiou@') != vowel_:
+                    syllable.append(section)
+                    section = ''
+                    vowel_ = not vowel_
+                if len(token) > 1:
+                    if token in trans_table:
+                        token = trans_table[token]
+                    else:
+                        trans_table[token] = token = str(trans_id)
+                        trans_id += 1
+                section += token
+                token = ''
+            continue
+
+        if char == '.':
+            section += token
+            syllable.append(section)
+            while len(syllable) < 3:
+                syllable.append('')
+            word.append(' '.join(syllable))
+            syllable = []
+            section = ''
+            token = ''
+            vowel_ = False
+            continue
+
+        token += char
+    return '/'.join(word)
+
 def parse_morph(morph):
     affix_open = False
     index = 0
@@ -31,7 +77,9 @@ def parse_morph(morph):
 
         token += char
 
-    return output
+    output2 = [' '.join(output[0]), output[1], ' '.join(output[2])]
+
+    return '/'.join(output2)
 
 def parseline(line):
     # Identifier (anything greater than 1, or any non-blank string, is removed)
@@ -58,10 +106,17 @@ def parse(filename):
             if l != None:
                 lexicon.append(l)
 
+    return lexicon
+
+def save_file(lexicon, filename='lex-parser/parsed.txt'):
+    with open(filename, 'w') as f:
+        for line in lexicon:
+            f.write(':'.join(line)+'\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('filename')
 
     args = parser.parse_args()
-    parse(args.filename)
+    lexicon = parse(args.filename)
+    save_file(lexicon)
