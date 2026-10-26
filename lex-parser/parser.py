@@ -1,8 +1,10 @@
 import argparse
 
+ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+trans_table = {}
+
+
 def parse_pron(pron):
-    trans_table = {}
-    trans_id = 0
     token = ''
     vowel_ = False
     section = ''
@@ -27,8 +29,7 @@ def parse_pron(pron):
                     if token in trans_table:
                         token = trans_table[token]
                     else:
-                        trans_table[token] = token = str(trans_id)
-                        trans_id += 1
+                        trans_table[token] = token = ALPHABET[len(trans_table.keys())]
                 section += token
                 token = ''
             continue
@@ -108,10 +109,13 @@ def parse(filename):
 
     return lexicon
 
-def save_file(lexicon, filename='lex-parser/parsed.txt'):
-    with open(filename, 'w') as f:
+def save_file(lexicon, folder='lex-parser/', lexFile='parsed', transFile='trans_table'):
+    with open(folder+lexFile+'.txt', 'w') as f:
         for line in lexicon:
             f.write(':'.join(line)+'\n')
+    with open(folder+transFile+'.txt', 'w') as f:
+        for token in trans_table.keys():
+            f.write(token+' - '+trans_table[token]+'\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
