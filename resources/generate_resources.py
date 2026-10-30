@@ -49,7 +49,7 @@ if __name__ == '__main__':
     lexicon = parse(args.filename)
 
     freq = syllable_freq(lexicon)
-    with open('resources/resources.json', 'w') as f:
+    with open('resources/syllables.json', 'w') as f:
         json.dump(freq, f, indent=2)
 
     phonemes = phoneme_list(lexicon)
