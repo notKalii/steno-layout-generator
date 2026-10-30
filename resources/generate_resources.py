@@ -12,6 +12,22 @@ def syllable_freq(lexicon):
                 freq[syl] = 1
     return freq
 
+def strokes():
+    f0 = ['00', '01', '10', '11']
+    f1 = ['0000', '0001', '0010', '0100', '1000', '0011', '1100', '1010', '0101', '1111']
+    f2 = ['000', '001', '010', '100', '011', '110', '111']
+    stroke_list = []
+
+    for a in range(len(f0)):
+        for b in range(len(f1)):
+            for c in range(len(f2)):
+                for d in range(len(f2)):
+                    for e in range(len(f1)):
+                        stroke = f0[a]+f1[b]+f2[c]+f2[d]+f1[e]
+                        stroke_list.append(int(stroke, 2))
+
+    return stroke_list
+
 def phoneme_list(lexicon):
     onsets = []
     nuclei = []
@@ -62,3 +78,8 @@ if __name__ == '__main__':
         f.write('\n')
         for p in phonemes[2]:
             f.write(p)
+
+    stroke_list = strokes()
+    with open('resources/strokes.txt', 'w') as f:
+        for s in stroke_list:
+            f.write(str(s)+'\n')
