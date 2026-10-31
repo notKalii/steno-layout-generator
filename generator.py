@@ -1,7 +1,8 @@
 import argparse
-import json
+import pickle
 import random
 import threading
+import timeit
 
 POPULATION_SIZE = 1000
 THREAD_COUNT = 8
@@ -28,21 +29,21 @@ def valid(stroke):
 
     return True
 
-def random_layout(phonemes, strokes):
+def random_layout():
     layout = Layout()
-    for onset in phonemes[0]: layout.o[onset] = strokes[random.randint(0, len(strokes)-1)]
-    for nucleus in phonemes[1]: layout.n[nucleus] = strokes[random.randint(0, len(strokes)-1)]
-    for coda in phonemes[2]: layout.c[coda] = strokes[random.randint(0, len(strokes)-1)]
+    for onset in resources.onsets: layout.o[onset] = resources.strokes[random.randint(0, len(resources.strokes)-1)]
+    for nucleus in resources.nuclei: layout.n[nucleus] = resources.strokes[random.randint(0, len(resources.strokes)-1)]
+    for coda in resources.codas: layout.c[coda] = resources.strokes[random.randint(0, len(resources.strokes)-1)]
 
     return layout
 
-def score_layout(population, syllables, start_point, interval):
+def score_layout(start_point, interval):
     print(f'Thread {int(start_point/interval)+1} started')
     for i in range(start_point, start_point+interval):
         layout = population[i]
         conflicts_list = []
         conflicts = 0
-        for syl in syllables.keys():
+        for syl in resources.syllables:
             stroke = 0
             s = syl.split(' ')
             for char in s[0]: stroke = stroke | layout.o[char]
@@ -55,19 +56,23 @@ def score_layout(population, syllables, start_point, interval):
         population[i].score = conflicts
     print(f'Thread {int(start_point/interval)+1} finished')
 
-def generate(lexicon, syllables, phonemes, strokes):
+def generate():
+    global population
+    ts = timeit.default_timer()
     # Initialise population
     population = []
-    for i in range(POPULATION_SIZE): population.append(random_layout(phonemes, strokes))
-    print('Population intialised')
+    for i in range(POPULATION_SIZE): population.append(random_layout())
+    te = timeit.default_timer()
+    print(f'Population intialised ({round(te-ts, 5)})')
 
     # Score layout
+    ts = timeit.default_timer()
     threads = []
     start_point = 0
     interval = int(POPULATION_SIZE / THREAD_COUNT)
     for i in range(THREAD_COUNT): 
         threads.append(
-            threading.Thread(target=score_layout, args=(population, syllables, start_point, interval))
+            threading.Thread(target=score_layout, args=(start_point, interval))
         )
         print(f'Thread {i} created')
         start_point += interval
@@ -76,32 +81,28 @@ def generate(lexicon, syllables, phonemes, strokes):
     clear_lines(8)
     for t in threads: t.join()
     clear_lines(8)
+    te = timeit.default_timer()
+    print(f'Scoring complete ({round(te-ts, 5)})')
     avgScore = 0
     for layout in population: avgScore += layout.score
     print(avgScore/POPULATION_SIZE)
 
 if __name__ == '__main__':
+    global resources
+    global lexicon
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('lexicon')
-    parser.add_argument('syllables')
-    parser.add_argument('phonemes')
-    parser.add_argument('strokes')
+    parser.add_argument('resources')
 
     args = parser.parse_args()
+
     lexicon = []
     with open(args.lexicon, 'r') as f:
         for line in f.readlines():
             lexicon.append(line.strip().split(':'))
-    with open(args.syllables, 'r') as f:
-        syllable_freq = json.load(f)
-    phonemes = []
-    with open(args.phonemes, 'r') as f:
-        for line in f.readlines():
-            phonemes.append(line.strip())
-    strokes = []
-    with open(args.strokes, 'r') as f:
-        for line in f.readlines():
-            strokes.append(int(line.strip()))
+    with open(args.resources, 'rb') as f:
+        resources = pickle.load(f)
 
-    generate(lexicon, syllable_freq, phonemes, strokes)
+    generate()
