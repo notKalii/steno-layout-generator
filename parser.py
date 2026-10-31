@@ -110,11 +110,11 @@ def parse(filename):
 
     return lexicon
 
-def save_file(lexicon, folder='lex-parser/', lexFile='parsed', transFile='trans_table'):
-    with open(folder+lexFile+'.txt', 'w') as f:
+def save_file(lexicon, lexFile='parsed', transFile='trans_table'):
+    with open(lexFile+'.txt', 'w') as f:
         for line in lexicon:
             f.write(':'.join(line)+'\n')
-    with open(folder+transFile+'.json', 'w') as f:
+    with open(transFile+'.json', 'w') as f:
         json.dump(trans_table, f, indent=2)
 
 if __name__ == '__main__':

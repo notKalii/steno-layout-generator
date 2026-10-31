@@ -90,5 +90,5 @@ if __name__ == '__main__':
     stroke_list = strokes()
     resources = Resources(syl_freq[0], syl_freq[1], phonemes, stroke_list)
 
-    with open('resources.pickle', 'wb') as f:
+    with open('resources/resources.pickle', 'wb') as f:
         pickle.dump(resources, f)
