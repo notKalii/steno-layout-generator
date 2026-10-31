@@ -1,16 +1,37 @@
 import argparse
 import json
+import pickle
+
+class Resources:
+    def __init__(self, syllables, frequency, phonemes, strokes):
+        self.syllables = syllables
+        self.frequency = frequency
+        self.onsets = phonemes[0]
+        self.nuclei = phonemes[1]
+        self.codas = phonemes[2]
+        self.strokes = strokes
+
+    def valid(self, stroke):
+        s = format(stroke, '016b')
+        if s[2:6] in ['0110', '0111', '1001', '1011', '1101', '1110']: return False
+        if s[9:12] in ['0110', '0111', '1001', '1011', '1101', '1110']: return False
+        if s[9] in ['101', '111']: return False
+        if s[12:] in ['101', '111']: return False
+    
+        return True
 
 def syllable_freq(lexicon):
     freq = {}
+    syls = []
     for line in lexicon:
         word = line[1].split('/')
         for syl in word:
             if syl in freq:
                 freq[syl] += 1
             else:
+                syls.append(syl)
                 freq[syl] = 1
-    return freq
+    return (syls, freq)
 
 def strokes():
     f0 = ['00', '01', '10', '11']
@@ -64,22 +85,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     lexicon = parse(args.filename)
 
-    freq = syllable_freq(lexicon)
-    with open('resources/syllables.json', 'w') as f:
-        json.dump(freq, f, indent=2)
-
+    syl_freq = syllable_freq(lexicon)
     phonemes = phoneme_list(lexicon)
-    with open('resources/phonemes.txt', 'w') as f:
-        for p in phonemes[0]:
-            f.write(p)
-        f.write('\n')
-        for p in phonemes[1]:
-            f.write(p)
-        f.write('\n')
-        for p in phonemes[2]:
-            f.write(p)
-
     stroke_list = strokes()
-    with open('resources/strokes.txt', 'w') as f:
-        for s in stroke_list:
-            f.write(str(s)+'\n')
+    resources = Resources(syl_freq[0], syl_freq[1], phonemes, stroke_list)
+
+    with open('resources.pickle', 'wb') as f:
+        pickle.dump(resources, f)
