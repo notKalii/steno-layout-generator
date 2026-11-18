@@ -1,11 +1,11 @@
 import argparse
 import pickle
 import random
-import threading
 import timeit
+from resources import Resources
 
 POPULATION_SIZE = 1000
-THREAD_COUNT = 8
+THREAD_COUNT = 10
 
 class Layout:
     def __init__(self):
@@ -37,24 +37,22 @@ def random_layout():
 
     return layout
 
-def score_layout(start_point, interval):
-    print(f'Thread {int(start_point/interval)+1} started')
-    for i in range(start_point, start_point+interval):
-        layout = population[i]
-        conflicts_list = []
-        conflicts = 0
-        for syl in resources.syllables:
-            stroke = 0
-            s = syl.split(' ')
-            for char in s[0]: stroke = stroke | layout.o[char]
-            for char in s[1]: stroke = stroke | layout.n[char]
-            for char in s[2]: stroke = stroke | layout.c[char]
-            if stroke in conflicts_list:
-                conflicts += 1
-            else:
-                conflicts_list.append(stroke)
-        population[i].score = conflicts
-    print(f'Thread {int(start_point/interval)+1} finished')
+def score_layout(layout):
+    global resources
+    syllables = resources.syllables
+    conflicts_list = []
+    conflicts = 0
+    for syl in syllables:
+        stroke = 0
+        s = syl.split(' ')
+        for char in s[0]: stroke = stroke | layout.o[char]
+        for char in s[1]: stroke = stroke | layout.n[char]
+        for char in s[2]: stroke = stroke | layout.c[char]
+        if stroke in conflicts_list:
+            conflicts += 1
+        else:
+            conflicts_list.append(stroke)
+    return conflicts
 
 def generate():
     global population
@@ -66,25 +64,12 @@ def generate():
     print(f'Population intialised ({round(te-ts, 5)})')
 
     # Score layout
+    avgScore = 0
     ts = timeit.default_timer()
-    threads = []
-    start_point = 0
-    interval = int(POPULATION_SIZE / THREAD_COUNT)
-    for i in range(THREAD_COUNT): 
-        threads.append(
-            threading.Thread(target=score_layout, args=(start_point, interval))
-        )
-        print(f'Thread {i} created')
-        start_point += interval
-    clear_lines(8)
-    for t in threads: t.start()
-    clear_lines(8)
-    for t in threads: t.join()
-    clear_lines(8)
+    for l in population:
+        l.score = score_layout(l)
     te = timeit.default_timer()
     print(f'Scoring complete ({round(te-ts, 5)})')
-    avgScore = 0
-    for layout in population: avgScore += layout.score
     print(avgScore/POPULATION_SIZE)
 
 if __name__ == '__main__':
